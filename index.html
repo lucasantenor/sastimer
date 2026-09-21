@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>SAS POKER</title>
+    <style>
+        /* Variáveis Globais de Cores, Quadrantes Individuais e Tamanhos */
+        :root {
+            --bg-color: #000000;
+            --size-logo: 500px;
+            
+            /* Cores Individuais dos Quadrantes (Transparentes por padrão) */
+            --etapa-bg: transparent;       --etapa-border: transparent;
+            --premio-bg: transparent;      --premio-border: transparent;
+            --blinds-bg: transparent;      --blinds-border: transparent;
+            --nivel-bg: transparent;       --nivel-border: transparent;
+            --timer-bg: transparent;       --timer-border: transparent;
+            --footer-bg: transparent;      --footer-border: transparent;
+            --info-bg: transparent;        --info-border: transparent;
+
+            /* Configurações Individuais de Texto (Cores e Tamanhos baseadas no seu Print) */
+            --c-header: #00ff00;         --s-header: 0px;
+            --c-nivel: #ff0000;          --s-nivel: 90px;
+            --c-timer: #ffffff;          --s-timer: 550px;
+            
+            --c-blind-title: #ffff00;    --s-blind-title: 40px;
+            --c-blind-label: #00ff00;    --s-blind-label: 40px;
+            --c-blind-val: #ffffff;      --s-blind-val: 100px;
+            
+            --c-etapa-label: #ffffff;    --s-etapa-label: 0px;
+            --c-etapa-val: #00ff00;      --s-etapa-val: 0px;
+            
+            --c-premio-title: #00ff00;   --s-premio-title: 50px;
+            --c-premio-total: #2ecc71;   --s-premio-total: 40px;
+            --c-premio-item: #ffffff;    --s-premio-item: 40px;
+            
+            --c-footer-label: #ffffff;   --s-footer-label: 16px;
+            --c-footer-val: #00ff00;     --s-footer-val: 70px;
+
+            /* INÍCIO E TEMPO DE JOGO */
+            --c-info-label: #ffffff;     --s-info-label: 70px;
+            --c-info-val: #ffff00;       --s-info-val: 70px;
+
+            /* Posições relativas dos blocos (Eixo X e Y do seu Print) */
+            --pos-header-top: 0px;       --pos-header-left: 0px;
+            --pos-nivel-top: -80px;      --pos-nivel-left: 0px;
+            --pos-timer-top: -120px;     --pos-timer-left: 0px;
+            --pos-blinds-top: -100px;    --pos-blinds-left: 0px;
+            --pos-etapa-top: 0px;        --pos-etapa-left: -9px;
+            --pos-premiacao-top: 0px;    --pos-premiacao-left: 0px;
+            --pos-footer-top: 1150px;    --pos-footer-left: 0px;
+            --pos-info-top: 20px;        --pos-info-right: 40px;
+        }
+
+        body {
+            background-color: var(--bg-color); color: #fff; font-family: 'Arial', sans-serif;
+            margin: 0; display: flex; flex-direction: column; height: 100vh; text-align: center;
+            box-sizing: border-box; overflow: hidden; position: relative; 
+        }
+        
+        .pos-wrapper {
+            position: relative; transition: top 0.2s, left 0.2s, right 0.2s, transform 0.2s;
+            display: flex; justify-content: center; align-items: center; width: 100%;
+        }
+
+        /* Elementos da Tela */
+        .wrapper-header { top: var(--pos-header-top); left: var(--pos-header-left); justify-content: flex-start; padding: 20px 30px; position: absolute; width: auto; z-index: 5;}
+        .logo-container { display: flex; align-items: center; gap: 15px; }
+        .logo-img { max-height: var(--size-logo); display: block; object-fit: contain; }
+        .header { font-size: var(--s-header); color: var(--c-header); font-weight: bold; text-transform: uppercase; text-align: left; white-space: nowrap;}
+
+        /* INFORMAÇÕES DO CANTO SUPERIOR DIREITO (Início & Tempo de Jogo) */
+        .wrapper-info-topo {
+            position: absolute; top: var(--pos-info-top); right: var(--pos-info-right); display: flex; gap: 20px; z-index: 6; width: auto; justify-content: flex-end;
+        }
+        .info-topo-box {
+            background: var(--info-bg); border: 1px solid var(--info-border); padding: 8px 15px; border-radius: 8px; text-align: center; display: flex; flex-direction: column; align-items: center;
+        }
+        .info-topo-label { font-size: var(--s-info-label); color: var(--c-info-label); font-weight: bold; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; line-height: 1.1; }
+        .info-topo-valor { font-size: var(--s-info-val); color: var(--c-info-val); font-weight: bold; margin-top: 4px; white-space: nowrap; line-height: 1.1; }
+
+        .wrapper-etapa { top: calc(90px + var(--pos-etapa-top)); right: calc(40px - var(--pos-etapa-left)); position: absolute; width: auto; justify-content: flex-end; z-index: 5; flex-direction: column;}
+        .etapa-box { background: var(--etapa-bg); border: 2px solid var(--etapa-border); padding: 10px 20px; border-radius: 8px; text-align: center; min-width: 130px; white-space: nowrap; }
+        .etapa-label { font-size: var(--s-etapa-label); color: var(--c-etapa-label); font-weight: bold; letter-spacing: 1px; }
+        .etapa-valor { font-size: var(--s-etapa-val); color: var(--c-etapa-val); font-weight: bold; margin-top: 2px; }
+
+        .wrapper-premiacao { top: calc(190px + var(--pos-premiacao-top)); right: calc(40px - var(--pos-premiacao-left)); position: absolute; width: auto; justify-content: flex-end; z-index: 4; }
+        .premiacao-box { background: var(--premio-bg); border: 1px solid var(--premio-border); padding: 10px 15px; border-radius: 8px; width: auto; min-width: 250px; text-align: left; overflow: visible; height: auto; display: none;}
+        .premiacao-title { font-size: var(--s-premio-title); color: var(--c-premio-title); font-weight: bold; text-align: center; margin-bottom: 8px; border-bottom: 1px solid var(--premio-border); padding-bottom: 4px; text-transform: uppercase; }
+        
+        .premiacao-total-display { font-size: var(--s-premio-total); color: var(--c-premio-total); font-weight: bold; text-align: center; margin-bottom: 12px; width: 100%; display: block;}
+        
+        #lista-premiacao-exibicao { display: flex; flex-direction: column; align-items: flex-start; width: 100%; gap: 4px; }
+        .premiacao-item { display: flex; justify-content: flex-start; align-items: center; font-size: var(--s-premio-item); color: var(--c-premio-item); white-space: nowrap; gap: 15px; text-align: left; width: 100%; }
+        .premiacao-item span:first-child { color: var(--c-premio-item); font-weight: bold; min-width: 75px; text-align: left; }
+        
+        .main-content { display: flex; flex-direction: column; align-items: center; justify-content: center; flex-grow: 1; width: 100%; position: relative; z-index: 1; padding-top: 100px; }
+
+        .wrapper-nivel { top: var(--pos-nivel-top); left: var(--pos-nivel-left); }
+        .nivel-box { background: var(--nivel-bg); border: 1px solid var(--nivel-border); padding: 10px 25px; border-radius: 8px; display: inline-block; }
+        .nivel { font-size: var(--s-nivel); margin: 0; color: var(--c-nivel); font-weight: bold; text-transform: uppercase; white-space: nowrap;}
+        
+        .wrapper-timer { top: var(--pos-timer-top); left: var(--pos-timer-left); }
+        .timer-box { background: var(--timer-bg); border: 1px solid var(--timer-border); padding: 15px 30px; border-radius: 12px; display: inline-block; }
+        .timer { font-size: var(--s-timer); font-weight: bold; margin: 0; line-height: 1; color: var(--c-timer); white-space: nowrap;}
+        .timer.intervalo { color: #e74c3c !important; } 
+        
+        /* Blinds */
+        .wrapper-blinds { top: var(--pos-blinds-top); left: var(--pos-blinds-left); width: 100%; display: flex; justify-content: center;}
+        .blinds-container { display: flex; justify-content: space-around; align-items: stretch; padding: 15px 30px; background-color: var(--blinds-bg); border: 1px solid var(--blinds-border); margin: 10px auto; border-radius: 10px; box-sizing: border-box; width: max-content; max-width: 95vw; gap: 100px; }
+        .blind-section-wrapper { display: flex; flex-direction: column; align-items: center; }
+        
+        .blind-section-title { color: var(--c-blind-title); font-size: var(--s-blind-title); margin: 0 0 10px 0; letter-spacing: 1px; font-weight: bold; white-space: nowrap;}
+        .blind-values-grid { display: flex; gap: 20px; }
+        .blind-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+        .blind-label { color: var(--c-blind-label); font-size: var(--s-blind-label); font-weight: bold; margin-bottom: 5px; text-transform: uppercase; white-space: nowrap;}
+        .blind-val { font-size: var(--s-blind-val); color: var(--c-blind-val); font-weight: bold; line-height: 1; white-space: nowrap; }
+        
+        .separator-col { display: flex; align-items: flex-end; padding-bottom: 5px; font-size: var(--s-blind-val); color: var(--c-blind-label); font-weight: bold; }
+        .blind-divider { width: 2px; background-color: var(--blinds-border); margin: 0 10px; }
+        .txt-msg-prox { font-size: var(--s-blind-title); color: var(--c-blind-title); font-weight: bold; margin-top: 10px; display: none; }
+
+        /* Footer */
+        .wrapper-footer { top: var(--pos-footer-top); left: var(--pos-footer-left); position: absolute; bottom: 0; width: 100%; z-index: 5;}
+        .info-footer { display: flex; justify-content: space-around; padding: 20px; background-color: var(--footer-bg); border-top: 2px solid var(--footer-border); width: 100%; box-sizing: border-box; }
+        .info-box { display: flex; flex-direction: column; align-items: center; white-space: nowrap;}
+        .info-box span { display: block; color: var(--c-footer-label); font-size: var(--s-footer-label); margin-bottom: 5px; font-weight:bold;}
+        .info-box strong { font-size: var(--s-footer-val); color: var(--c-footer-val); line-height: 1;}
+
+        /* Admin e Modal */
+        .admin-controls { position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; background: #000000; padding: 10px 15px; border-radius: 8px; flex-wrap: wrap; justify-content: center; border: 1px solid #444; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.8); }
+        .admin-controls button { background: #555; border: none; padding: 8px 15px; color: #fff; font-weight: bold; font-size: 13px; border-radius: 5px; cursor: pointer; transition: 0.2s; }
+        .admin-controls button:hover { opacity: 0.8; }
+        .admin-controls button#btn-play { background: #2ecc71; color: #000; }
+        .admin-controls button.btn-pause { background: #e74c3c; color: white; }
+        .admin-controls button.btn-config { background: #3498db; color: white; }
+        .admin-controls button.btn-blinds { background: #f39c12; color: #000; }
+        .admin-controls button.btn-telao { background: #9b59b6; color: white; }
+        .admin-controls button#btn-toggle-premio { background: #3498db; color: white; }
+        .admin-controls button#btn-toggle-footer { background: #16a085; color: white; }
+        .oculto { display: none !important; }
+
+        /* Modal Base */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; box-sizing: border-box; }
+        .modal-content { background: #1a1a1a; padding: 25px; border-radius: 10px; width: 100%; max-width: 1300px; max-height: 95vh; display: flex; flex-direction: column; border: 2px solid #555; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
+        .modal-header { text-align: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #333;}
+        .modal-header h2 { margin: 0; color: #fff; font-size: 22px; }
+        
+        .modal-body { display: flex; flex-wrap: wrap; gap: 20px; overflow-y: auto; padding-right: 10px;}
+        .modal-col { flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 15px; }
+        
+        .config-box { background: #000000; padding: 15px; border-radius: 8px; border: 1px solid #333; }
+        .config-box h3 { margin: 0 0 15px 0; font-size: 15px; color: #3498db; text-transform: uppercase; border-bottom: 1px solid #444; padding-bottom: 5px; }
+        
+        .form-group { margin-bottom: 12px; display: flex; flex-direction: column; }
+        .form-group label { margin-bottom: 4px; font-size: 13px; color: #ccc; }
+        .form-group input { padding: 8px; border-radius: 4px; border: 1px solid #444; background: #111; color: #fff; font-size: 14px; }
+        .form-group input[type="file"] { padding: 4px; }
+        .form-group input[type="color"] { padding: 0; cursor: pointer; height: 32px; width: 100%; border: none; border-radius: 4px; }
+        
+        .text-grid-row { display: grid; grid-template-columns: 1fr 50px 70px; gap: 10px; align-items: center; margin-bottom: 8px; }
+        .text-grid-row span { font-size: 12px; color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .text-grid-row input[type="color"] { padding: 0; cursor: pointer; height: 30px; width: 100%; border: none; border-radius: 4px; }
+        .text-grid-row input[type="number"] { padding: 5px; font-size: 13px; text-align: center; }
+
+        .pos-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 5px;}
+
+        .modal-buttons { display: flex; justify-content: center; gap: 20px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #333;}
+        .modal-buttons button { padding: 12px 30px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 15px;}
+        .btn-salvar { background: #2ecc71; color: #000; }
+        .btn-cancelar { background: #e74c3c; color: #fff; }
+        .aviso-telao { position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: #aaa; font-size: 11px; padding: 5px 10px; border-radius: 4px; pointer-events: none; display: none; z-index: 2000;}
+        
+        /* LINHAS DO CONFIGURADOR DE FUNDO/BORDA */
+        .config-bg-row { margin-bottom: 12px; }
+        .config-bg-title { font-size: 12px; color: #fff; margin-bottom: 5px; display: block; border-bottom: 1px solid #444; padding-bottom: 3px; font-weight: bold; }
+        .config-bg-cols { display: flex; justify-content: space-between; gap: 10px; }
+        .config-bg-col { display: flex; align-items: center; gap: 6px; }
+        .config-bg-col label { font-size: 11px; color: #ccc; margin: 0; cursor: pointer; }
+        .config-bg-col input[type="color"] { width: 35px; height: 25px; padding: 0; border: none; border-radius: 4px; cursor: pointer; }
+        
+        /* CSS Modal Blinds Drag & Drop */
+        .blind-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #222; padding: 10px; margin-bottom: 8px; border-radius: 5px; border: 1px solid #444; transition: transform 0.1s;}
+        .blind-row.dragging { opacity: 0.4; background: #333; border: 1px dashed #f39c12; }
+        .blind-row input { background: #111; color: #fff; border: 1px solid #555; border-radius: 4px; padding: 6px; text-align: center; font-size: 14px;}
+        .blind-row .in-sb, .blind-row .in-bb, .blind-row .in-ante { width: 75px; }
+        .blind-row .in-duracao { width: 60px; font-weight: bold; color: #f1c40f;}
+        .drag-handle { cursor: grab; color: #888; font-size: 20px; padding: 0 10px; user-select: none; }
+        .drag-handle:active { cursor: grabbing; }
+        .nivel-label { font-weight: bold; width: 85px; text-align: left; font-size: 14px;}
+
+        /* ADAPTAÇÃO AUTOMÁTICA PARA TABLETS E CELULARES (RESPONSIVIDADE) */
+        @media screen and (max-width: 1200px) {
+            :root {
+                --s-timer: 220px !important;
+                --s-nivel: 45px !important;
+                --s-blind-val: 40px !important;
+                --s-blind-title: 20px !important;
+                --s-blind-label: 18px !important;
+                --s-info-label: 14px !important;
+                --s-info-val: 18px !important;
+                --s-footer-val: 28px !important;
+            }
+            .blinds-container {
+                flex-direction: column;
+                gap: 15px;
+                padding: 10px 20px;
+            }
+            .blind-divider {
+                width: 100%;
+                height: 2px;
+                margin: 5px 0;
+            }
+            .wrapper-info-topo {
+                position: relative !important;
+                top: auto !important;
+                right: auto !important;
+                justify-content: center;
+                margin: 10px auto;
+            }
+            .wrapper-etapa, .wrapper-premiacao {
+                position: relative !important;
+                top: auto !important;
+                right: auto !important;
+                align-items: center;
+                margin: 5px auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="pos-wrapper wrapper-header" id="el-header">
+        <div class="header-container" style="display:flex;">
+            <div class="logo-container">
+                <img id="logo-display" class="logo-img" src="sas.png" onerror="this.style.display='none'">
+            </div>
+            <div class="header-titles"><div class="header" id="nome-clube">ITALIAN POKER</div></div>
+        </div>
+    </div>
+
+    <!-- HORA DE INÍCIO E TEMPO DE JOGO NO CANTO SUPERIOR DIREITO -->
+    <div class="pos-wrapper wrapper-info-topo" id="el-info-topo">
+        <div class="info-topo-box">
+            <div class="info-topo-label">INÍCIO</div>
+            <div class="info-topo-valor" id="txt-hora-inicio">--:--</div>
+        </div>
+        <div class="info-topo-box">
+            <div class="info-topo-label">TEMPO DE JOGO</div>
+            <div class="info-topo-valor" id="txt-tempo-jogo">00:00:00</div>
+        </div>
+    </div>
+
+    <div class="pos-wrapper wrapper-etapa" id="el-etapa">
+        <div class="etapa-box">
+            <div class="etapa-label">ETAPA</div>
+            <div class="etapa-valor" id="txt-aba-atual">--</div>
+        </div>
+    </div>
+
+    <div class="pos-wrapper wrapper-premiacao" id="el-premiacao">
+        <div class="premiacao-box" id="box-premiacao">
+            <div class="premiacao-title">PREMIAÇÃO</div>
+            <div class="premiacao-total-display" id="txt-total-premio">R$ 0,00</div>
+            <div id="lista-premiacao-exibicao"></div>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="pos-wrapper wrapper-nivel" id="el-nivel">
+            <div class="nivel-box"><div class="nivel" id="txt-nivel">NÍVEL 1</div></div>
+        </div>
+        <div class="pos-wrapper wrapper-timer" id="el-timer">
+            <div class="timer-box"><div class="timer" id="txt-timer">15:00</div></div>
+        </div>
+
+        <div class="pos-wrapper wrapper-blinds" id="el-blinds">
+            <div class="blinds-container" id="blinds-box">
+                <div class="blind-section-wrapper">
+                    <div class="blind-section-title">BLIND ATUAL</div>
+                    <div class="blind-values-grid" id="grid-blind-atual">
+                        <div class="blind-col"><span class="blind-label">SMALL</span><span class="blind-val" id="val-sb-atual">--</span></div>
+                        <div class="separator-col"></div>
+                        <div class="blind-col"><span class="blind-label">BIG</span><span class="blind-val" id="val-bb-atual">--</span></div>
+                        <div class="separator-col">-</div>
+                        <div class="blind-col"><span class="blind-label">ANTE</span><span class="blind-val" id="val-ante-atual">--</span></div>
+                    </div>
+                </div>
+
+                <div class="blind-divider"></div>
+
+                <div class="blind-section-wrapper">
+                    <div class="blind-section-title">PRÓXIMA BLIND</div>
+                    <div class="blind-values-grid" id="grid-blind-prox">
+                        <div class="blind-col"><span class="blind-label">SMALL</span><span class="blind-val" id="val-sb-prox">--</span></div>
+                        <div class="separator-col"></div>
+                        <div class="blind-col"><span class="blind-label">BIG</span><span class="blind-val" id="val-bb-prox">--</span></div>
+                        <div class="separator-col">-</div>
+                        <div class="blind-col"><span class="blind-label">ANTE</span><span class="blind-val" id="val-ante-prox">--</span></div>
+                    </div>
+                    <div id="txt-msg-prox" class="txt-msg-prox">INTERVALO A SEGUIR</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5 INFORMAÇÕES NO RODAPÉ (Oculto por enquanto) -->
+    <div class="pos-wrapper wrapper-footer" id="el-footer" style="display: none;">
+        <div class="info-footer" id="footer-container-box">
+            <div class="info-box"><span>REGISTRADOS</span><strong id="txt-registrados">--</strong></div>
+            <div class="info-box"><span>EM JOGO</span><strong id="txt-em-jogo">--</strong></div>
+            <div class="info-box"><span>ELIMINADOS</span><strong id="txt-eliminados">--</strong></div>
+            <div class="info-box"><span>FICHAS EM JOGO</span><strong id="txt-fichas">--</strong></div>
+            <div class="info-box"><span>STACK MÉDIO</span><strong id="txt-stack">--</strong></div>
+        </div>
+    </div>
+
+    <div class="admin-controls" id="painel-admin">
+        <button onclick="voltarNivelComAlarme()">⏪ NÍVEL</button>
+        <button onclick="alterarTempo(-60)">-1 MIN</button>
+        <button onclick="playTimer()" id="btn-play">▶ PLAY</button>
+        <button onclick="pauseTimer()" class="btn-pause">⏸ PAUSE</button>
+        <button onclick="alterarTempo(60)">+1 MIN</button>
+        <button onclick="avancarNivelComAlarme()">NÍVEL ⏩</button>
+        <button onclick="togglePremiacao()" id="btn-toggle-premio" style="display: none;">👁️ MOSTRAR PREMIAÇÃO</button>
+        <button onclick="toggleFooter()" id="btn-toggle-footer" style="display: none;">👁️ OCULTAR RODAPÉ</button>
+        <button onclick="ativarModoTelao()" class="btn-telao">📺 MODO TELÃO</button>
+        <button onclick="abrirConfigBlinds()" class="btn-blinds">⏱️ CONFIG BLINDS</button>
+        <button onclick="abrirConfig()" class="btn-config">⚙️ PERSONALIZAR</button>
+    </div>
+
+    <div id="aviso-esc" class="aviso-telao">Pressione ESC para exibir os menus de comando novamente</div>
+
+    <!-- MODAL DE PERSONALIZAÇÃO VISUAL -->
+    <div id="modal-personalizacao" class="modal oculto">
+        <div class="modal-content">
+            <div class="modal-header"><h2>⚙️ PAINEL DE CONTROLE VISUAL - ITALIAN POKER</h2></div>
+            <div class="modal-body">
+                
+                <!-- COLUNA 1: IDENTIDADE E FUNDO/BORDA -->
+                <div class="modal-col">
+                    <div class="config-box">
+                        <h3>Identidade, Alarme e Fundo Principal</h3>
+                        <div class="form-group"><label>Cor de Fundo da Tela:</label><input type="color" id="bg-color" value="#000000"></div>
+                        <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px; margin-top: 10px;">
+                            <input type="checkbox" id="ativar-alarme" checked style="width: 18px; height: 18px; cursor: pointer;">
+                            <label for="ativar-alarme" style="margin: 0; cursor: pointer; color: #fff; font-size: 13px;">🔊 Tocar Alarme ao Trocar de Nível</label>
+                        </div>
+                        <!-- Botão de escolher arquivo da logo ocultado -->
+                        <div class="form-group" style="margin-top: 10px; display: none;"><label>Logo do Clube (Opcional se usar sas.png):</label><input type="file" id="input-logo" accept="image/*"></div>
+                        <div class="form-group"><label>Tamanho da Logo (px):</label><input type="number" id="s-logo" value="500"></div>
+                    </div>
+
+                    <div class="config-box">
+                        <h3>Fundo e Borda dos Quadrantes</h3>
+                        <div class="config-bg-row"><span class="config-bg-title">Início e Tempo de Jogo</span><div class="config-bg-cols"><div class="config-bg-col"><label>Fundo:</label> <input type="color" id="info-bg-color"> <label><input type="checkbox" id="info-bg-transp" checked> Ocultar (Transp.)</label></div><div class="config-bg-col"><label>Borda:</label> <input type="color" id="info-border-color"> <label><input type="checkbox" id="info-border-transp" checked> Ocultar</label></div></div></div>
+                        <div class="config-bg-row"><span class="config-bg-title">Caixa da Etapa</span><div class="config-bg-cols"><div class="config-bg-col"><label>Fundo:</label> <input type="color" id="etapa-bg-color"> <label><input type="checkbox" id="etapa-bg-transp" checked> Ocultar (Transp.)</label></div><div class="config-bg-col"><label>Borda:</label> <input type="color" id="etapa-border-color"> <label><input type="checkbox" id="etapa-border-transp" checked> Ocultar</label></div></div></div>
+                        <!-- Caixa de Premiação Oculta nas Configurações -->
+                        <div class="config-bg-row" style="display: none;"><span class="config-bg-title">Caixa de Premiação</span><div class="config-bg-cols"><div class="config-bg-col"><label>Fundo:</label> <input type="color" id="premio-bg-color"> <label><input type="checkbox" id="premio-bg-transp" checked> Ocultar (Transp.)</label></div><div class="config-bg-col"><label>Borda:</label> <input type="color" id="premio-border-color"> <label><input type="checkbox" id="premio-border-transp" checked> Ocultar</label></div></div></div>
+                        <div class="config-bg-row"><span class="config-bg-title">Bloco de Blinds</span><div class="config-bg-cols"><div class="config-bg-col"><label>Fundo:</label> <input type="color" id="blinds-bg-color"> <label><input type="checkbox" id="blinds-bg-transp" checked> Ocultar (Transp.)</label></div><div class="config-bg-col"><label>Borda:</label> <input type="color" id="blinds-border-color"> <label><input type="checkbox" id="blinds-border-transp" checked> Ocultar</label></div></div></div>
+                        <div class="config-bg-row"><span class="config-bg-title">Caixa do Nível</span><div class="config-bg-cols"><div class="config-bg-col"><label>Fundo:</label> <input type="color" id="nivel-bg-color"> <label><input type="checkbox" id="nivel-bg-transp" checked> Ocultar (Transp.)</label></div><div class="config-bg-col"><label>Borda:</label> <input type="color" id="nivel-border-color"> <label><input type="checkbox" id="nivel-border-transp" checked> Ocultar</label></div></div></div>
+                        <div class="config-bg-row"><span class="config-bg-title">Caixa do Timer</span><div class="config-bg-cols"><div class="config-bg-col"><label>Fundo:</label> <input type="color" id="timer-bg-color"> <label><input type="checkbox" id="timer-bg-transp" checked> Ocultar (Transp.)</label></div><div class="config-bg-col"><label>Borda:</label> <input type="color" id="timer-border-color"> <label><input type="checkbox" id="timer-border-transp" checked> Ocultar</label></div></div></div>
+                        <!-- Rodapé Oculto nas Configurações -->
+                        <div class="config-bg-row" style="display: none;"><span class="config-bg-title">Rodapé Inferior</span><div class="config-bg-cols"><div class="config-bg-col"><label>Fundo:</label> <input type="color" id="footer-bg-color"> <label><input type="checkbox" id="footer-bg-transp" checked> Ocultar (Transp.)</label></div><div class="config-bg-col"><label>Borda:</label> <input type="color" id="footer-border-color"> <label><input type="checkbox" id="footer-border-transp" checked> Ocultar</label></div></div></div>
+                    </div>
+                </div>
+
+                <!-- COLUNA 2: TIPOGRAFIA -->
+                <div class="modal-col">
+                    <div class="config-box">
+                        <h3>Tipografia: Tamanhos e Cores</h3>
+                        <div class="text-grid-row" style="border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 10px;">
+                            <span style="font-weight: bold; color: #fff;">Elemento</span><span style="font-weight: bold; color: #fff; text-align: center;">Cor</span><span style="font-weight: bold; color: #fff; text-align: center;">Tamanho</span>
+                        </div>
+                        <div class="text-grid-row"><span>Relógio (Timer)</span> <input type="color" id="c-timer" value="#ffffff"> <input type="number" id="s-timer" value="550"></div>
+                        <div class="text-grid-row"><span>Texto do Nível</span> <input type="color" id="c-nivel" value="#ff0000"> <input type="number" id="s-nivel" value="90"></div>
+                        <div class="text-grid-row"><span>Nome do Clube</span> <input type="color" id="c-header" value="#00ff00"> <input type="number" id="s-header" value="0"></div>
+                        <div class="text-grid-row"><span>Rótulo (Início/Tempo)</span> <input type="color" id="c-info-label" value="#ffffff"> <input type="number" id="s-info-label" value="70"></div>
+                        <div class="text-grid-row"><span>Valores (Início/Tempo)</span> <input type="color" id="c-info-val" value="#ffff00"> <input type="number" id="s-info-val" value="70"></div>
+                        <div class="text-grid-row"><span>Títulos (Atual/Próx)</span> <input type="color" id="c-blind-title" value="#ffff00"> <input type="number" id="s-blind-title" value="40"></div>
+                        <div class="text-grid-row"><span>Txts (SB/BB/Ante)</span> <input type="color" id="c-blind-label" value="#00ff00"> <input type="number" id="s-blind-label" value="40"></div>
+                        <div class="text-grid-row"><span>Valores Blinds</span> <input type="color" id="c-blind-val" value="#ffffff"> <input type="number" id="s-blind-val" value="100"></div>
+                        <div class="text-grid-row"><span>Texto 'ETAPA'</span> <input type="color" id="c-etapa-label" value="#ffffff"> <input type="number" id="s-etapa-label" value="0"></div>
+                        <div class="text-grid-row"><span>Número da Etapa</span> <input type="color" id="c-etapa-val" value="#00ff00"> <input type="number" id="s-etapa-val" value="0"></div>
+                        <!-- Premiação Oculta nas Configurações -->
+                        <div class="text-grid-row" style="display: none;"><span>Título 'PREMIAÇÃO'</span> <input type="color" id="c-premio-title" value="#00ff00"> <input type="number" id="s-premio-title" value="50"></div>
+                        <div class="text-grid-row" style="display: none;"><span>Total (Valor)</span> <input type="color" id="c-premio-total" value="#2ecc71"> <input type="number" id="s-premio-total" value="40"></div>
+                        <div class="text-grid-row" style="display: none;"><span>Itens (1º, 2º)</span> <input type="color" id="c-premio-item" value="#ffffff"> <input type="number" id="s-premio-item" value="40"></div>
+                        <!-- Rodapé Oculto nas Configurações -->
+                        <div class="text-grid-row" style="display: none;"><span>Rodapé Textos</span> <input type="color" id="c-footer-label" value="#ffffff"> <input type="number" id="s-footer-label" value="16"></div>
+                        <div class="text-grid-row" style="display: none;"><span>Rodapé Valores</span> <input type="color" id="c-footer-val" value="#00ff00"> <input type="number" id="s-footer-val" value="70"></div>
+                    </div>
+                </div>
+
+                <!-- COLUNA 3: POSICIONAMENTO -->
+                <div class="modal-col">
+                    <div class="config-box">
+                        <h3>Posicionamento Livre (Eixo X e Y)</h3>
+                        <div class="pos-controls"><div class="form-group"><label>Timer Y (Cima/Baixo):</label><input type="number" id="pos-timer-y" value="-120"></div><div class="form-group"><label>Timer X (Esq/Dir):</label><input type="number" id="pos-timer-x" value="0"></div></div>
+                        <div class="pos-controls"><div class="form-group"><label>Nível Y:</label><input type="number" id="pos-nivel-y" value="-80"></div><div class="form-group"><label>Nível X:</label><input type="number" id="pos-nivel-x" value="0"></div></div>
+                        <div class="pos-controls"><div class="form-group"><label>Blinds Y:</label><input type="number" id="pos-blinds-y" value="-100"></div><div class="form-group"><label>Blinds X:</label><input type="number" id="pos-blinds-x" value="0"></div></div>
+                        <div class="pos-controls"><div class="form-group"><label>Logo Y:</label><input type="number" id="pos-header-y" value="0"></div><div class="form-group"><label>Logo X:</label><input type="number" id="pos-header-x" value="0"></div></div>
+                        <div class="pos-controls"><div class="form-group"><label>Início/Tempo Y:</label><input type="number" id="pos-info-y" value="20"></div><div class="form-group"><label>Início/Tempo X (Dist. da Direita):</label><input type="number" id="pos-info-x" value="40"></div></div>
+                        <div class="pos-controls"><div class="form-group"><label>Etapa Y:</label><input type="number" id="pos-etapa-y" value="0"></div><div class="form-group"><label>Etapa X (Dist. da Direita):</label><input type="number" id="pos-etapa-x" value="-9"></div></div>
+                        <!-- Prêmio Oculto nas Configurações -->
+                        <div class="pos-controls" style="display: none;"><div class="form-group"><label>Prêmio Y:</label><input type="number" id="pos-premiacao-y" value="0"></div><div class="form-group"><label>Prêmio X (Dist. da Direita):</label><input type="number" id="pos-premiacao-x" value="0"></div></div>
+                        <!-- Rodapé Oculto nas Configurações -->
+                        <div class="pos-controls" style="display: none;"><div class="form-group"><label>Rodapé Y:</label><input type="number" id="pos-footer-y" value="1150"></div><div class="form-group"><label>Rodapé X:</label><input type="number" id="pos-footer-x" value="0"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-buttons">
+                <button onclick="fecharConfig()" class="btn-cancelar">CANCELAR</button>
+                <button onclick="salvarConfig()" class="btn-salvar">💾 SALVAR LAYOUT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONFIGURAÇÃO DAS BLINDS -->
+    <div id="modal-blinds" class="modal oculto">
+        <div class="modal-content" style="max-width: 750px;">
+            <div class="modal-header">
+                <h2>⏱️ CONFIGURAÇÃO DE BLINDS</h2>
+                <p style="color: #aaa; font-size: 13px; margin-top:5px;">Arraste as linhas pelo ícone ☰ para reordenar. A numeração (Nível 1, 2...) ajusta automaticamente.</p>
+            </div>
+            
+            <div class="modal-body" style="flex-direction: column; max-height: 60vh; overflow-y: auto; padding-right: 5px;" id="lista-blinds-config">
+                <!-- As linhas serão injetadas pelo JavaScript aqui -->
+            </div>
+
+            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 15px;">
+                <button onclick="addBlindRow(false)" style="padding: 10px 20px; font-weight: bold; background: #3498db; border:none; color:white; border-radius:5px; cursor:pointer;">+ ADICIONAR BLIND</button>
+                <button onclick="addBlindRow(true)" style="padding: 10px 20px; font-weight: bold; background: #e74c3c; border:none; color:white; border-radius:5px; cursor:pointer;">+ ADICIONAR INTERVALO</button>
+            </div>
+
+            <div class="modal-buttons">
+                <button onclick="fecharConfigBlinds()" class="btn-cancelar">CANCELAR</button>
+                <button onclick="salvarBlindsConfig()" class="btn-salvar">💾 SALVAR ESTRUTURA</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Array Padrão Inicial das Blinds
+        const defaultBlinds = [
+            { nivel: 1, sb: 100, bb: 200, ante: 200, duracao: 20, isBreak: false },
+            { nivel: 2, sb: 200, bb: 400, ante: 400, duracao: 20, isBreak: false },
+            { nivel: 3, sb: 300, bb: 600, ante: 600, duracao: 20, isBreak: false },
+            { nivel: 4, sb: 400, bb: 800, ante: 800, duracao: 20, isBreak: false },
+            { nivel: 5, sb: 500, bb: 1000, ante: 1000, duracao: 20, isBreak: false },
+            { nivel: 6, sb: 600, bb: 1200, ante: 1200, duracao: 20, isBreak: false },
+            { nivel: 7, sb: 800, bb: 1600, ante: 1600, duracao: 20, isBreak: false },
+            { nivel: 8, sb: 1000, bb: 2000, ante: 2000, duracao: 20, isBreak: false },
+            { nivel: "INTERVALO", title: "INTERVALO", duracao: 30, isBreak: true },
+            { nivel: 9, sb: 1000, bb: 3000, ante: 3000, duracao: 18, isBreak: false },
+            { nivel: 10, sb: 2000, bb: 4000, ante: 4000, duracao: 18, isBreak: false },
+            { nivel: 11, sb: 3000, bb: 6000, ante: 6000, duracao: 18, isBreak: false },
+            { nivel: 12, sb: 4000, bb: 8000, ante: 8000, duracao: 18, isBreak: false },
+            { nivel: 13, sb: 5000, bb: 10000, ante: 10000, duracao: 18, isBreak: false },
+            { nivel: 14, sb: 6000, bb: 12000, ante: 12000, duracao: 18, isBreak: false },
+            { nivel: 15, sb: 8000, bb: 16000, ante: 16000, duracao: 18, isBreak: false },
+            { nivel: 16, sb: 10000, bb: 20000, ante: 20000, duracao: 18, isBreak: false },
+            { nivel: 17, sb: 15000, bb: 30000, ante: 30000, duracao: 18, isBreak: false },
+            { nivel: 18, sb: 20000, bb: 40000, ante: 40000, duracao: 18, isBreak: false },
+            { nivel: 19, sb: 30000, bb: 60000, ante: 60000, duracao: 18, isBreak: false },
+            { nivel: 20, sb: 40000, bb: 80000, ante: 80000, duracao: 18, isBreak: false },
+            { nivel: 21, sb: 50000, bb: 100000, ante: 100000, duracao: 18, isBreak: false },
+            { nivel: 22, sb: 60000, bb: 120000, ante: 120000, duracao: 18, isBreak: false },
+            { nivel: 23, sb: 80000, bb: 160000, ante: 160000, duracao: 18, isBreak: false },
+            { nivel: 24, sb: 100000, bb: 200000, ante: 200000, duracao: 18, isBreak: false },
+            { nivel: 25, sb: 150000, bb: 300000, ante: 300000, duracao: 18, isBreak: false },
+            { nivel: 26, sb: 200000, bb: 400000, ante: 400000, duracao: 18, isBreak: false },
+            { nivel: 27, sb: 300000, bb: 600000, ante: 600000, duracao: 18, isBreak: false },
+            { nivel: 28, sb: 400000, bb: 800000, ante: 800000, duracao: 18, isBreak: false },
+            { nivel: 29, sb: 500000, bb: 1000000, ante: 1000000, duracao: 18, isBreak: false },
+            { nivel: 30, sb: 600000, bb: 1200000, ante: 1200000, duracao: 18, isBreak: false },
+            { nivel: 31, sb: 800000, bb: 1600000, ante: 1600000, duracao: 18, isBreak: false },
+            { nivel: 32, sb: 1000000, bb: 2000000, ante: 2000000, duracao: 18, isBreak: false },
+            { nivel: 33, sb: 1500000, bb: 3000000, ante: 3000000, duracao: 18, isBreak: false },
+            { nivel: 34, sb: 2000000, bb: 4000000, ante: 4000000, duracao: 18, isBreak: false },
+            { nivel: 35, sb: 2500000, bb: 5000000, ante: 5000000, duracao: 18, isBreak: false },
+        ];
+
+        let estruturaBlinds = JSON.parse(localStorage.getItem('itPokerBlindsV23')) || defaultBlinds;
+
+        let indiceNivelAtual = 0; let tempoRestante = estruturaBlinds[0].duracao * 60; let rodando = false; let intervaloRelogio = null;
+        let premiacaoVisivel = false; // Definição padrão como ocultada
+        
+        // Rodapé modificado para manter oculto por padrão (ignora localStorage)
+        let footerVisivel = false;
+
+        let tempoJogoSegundos = 0;
+        let horarioInicioStr = "--:--";
+        let inicioRegistrado = false;
+
+        function atualizarRelogioEstatico() {
+            if (!inicioRegistrado) {
+                const agora = new Date();
+                const options = { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+                document.getElementById('txt-hora-inicio').innerText = new Intl.DateTimeFormat('pt-BR', options).format(agora);
+            }
+        }
+
+        function atualizarDisplayTempoJogo() {
+            let horas = Math.floor(tempoJogoSegundos / 3600);
+            let minutos = Math.floor((tempoJogoSegundos % 3600) / 60);
+            let segundos = tempoJogoSegundos % 60;
+            let tempoFormatado = `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
+            document.getElementById('txt-tempo-jogo').innerText = tempoFormatado;
+        }
+
+        function togglePremiacao() {
+            premiacaoVisivel = !premiacaoVisivel;
+            let btn = document.getElementById('btn-toggle-premio');
+            if(premiacaoVisivel) { btn.innerText = "👁️ OCULTAR PREMIAÇÃO"; btn.style.background = "#e67e22"; } 
+            else { btn.innerText = "👁️ MOSTRAR PREMIAÇÃO"; btn.style.background = "#3498db"; }
+            atualizarDadosPlanilha(); 
+        }
+
+        function toggleFooter() {
+            footerVisivel = !footerVisivel;
+            localStorage.setItem('itPokerFooterVisivelV23', footerVisivel);
+            let btn = document.getElementById('btn-toggle-footer');
+            let boxFooter = document.getElementById('footer-container-box');
+            
+            if(footerVisivel) { 
+                btn.innerText = "👁️ OCULTAR RODAPÉ"; 
+                btn.style.background = "#16a085"; 
+                boxFooter.style.display = 'flex';
+            } else { 
+                btn.innerText = "👁️ MOSTRAR RODAPÉ"; 
+                btn.style.background = "#3498db"; 
+                boxFooter.style.display = 'none';
+            }
+        }
+
+        function aplicarEstadoFooterInicial() {
+            let btn = document.getElementById('btn-toggle-footer');
+            let boxFooter = document.getElementById('footer-container-box');
+            if(footerVisivel) {
+                btn.innerText = "👁️ OCULTAR RODAPÉ";
+                btn.style.background = "#16a085";
+                boxFooter.style.display = 'flex';
+            } else {
+                btn.innerText = "👁️ MOSTRAR RODAPÉ";
+                btn.style.background = "#3498db";
+                boxFooter.style.display = 'none';
+            }
+        }
+
+        function tocarAlarme() {
+            let configSalva = JSON.parse(localStorage.getItem('itPokerV23')) || { ativarAlarme: true };
+            if (configSalva.ativarAlarme === false) return;
+
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                for (let i = 0; i < 3; i++) {
+                    let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+                    osc.type = 'square'; osc.frequency.setValueAtTime(950, audioCtx.currentTime + (i * 0.25)); 
+                    gain.gain.setValueAtTime(0.4, audioCtx.currentTime + (i * 0.25)); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + (i * 0.25) + 0.18);
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.start(audioCtx.currentTime + (i * 0.25)); osc.stop(audioCtx.currentTime + (i * 0.25) + 0.18);
+                }
+            } catch (e) { console.log("Áudio bloqueado", e); }
+        }
+
+        function formatarNumero(num) { return num >= 1000 ? num.toLocaleString('pt-BR') : num; }
+
+        function atualizarTela() {
+            if(estruturaBlinds.length === 0) return;
+            
+            let configAtual = estruturaBlinds[indiceNivelAtual];
+            let proxConfig = estruturaBlinds[indiceNivelAtual + 1];
+            let minutos = Math.floor(tempoRestante / 60); let segundos = tempoRestante % 60;
+            
+            document.getElementById('txt-timer').innerText = `${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
+            let txtNivel = document.getElementById('txt-nivel'); let txtTimer = document.getElementById('txt-timer'); let boxBlinds = document.getElementById('blinds-box');
+
+            if (configAtual.isBreak) {
+                txtNivel.innerText = "INTERVALO"; txtTimer.classList.add('intervalo'); boxBlinds.classList.add('oculto'); 
+            } else {
+                txtNivel.innerText = `NÍVEL ${configAtual.nivel}`; txtTimer.classList.remove('intervalo'); boxBlinds.classList.remove('oculto');
+                document.getElementById('val-sb-atual').innerText = formatarNumero(configAtual.sb);
+                document.getElementById('val-bb-atual').innerText = formatarNumero(configAtual.bb);
+                document.getElementById('val-ante-atual').innerText = formatarNumero(configAtual.ante);
+                
+                let gridProx = document.getElementById('grid-blind-prox'); let msgProx = document.getElementById('txt-msg-prox');
+
+                if (proxConfig && !proxConfig.isBreak) {
+                    gridProx.style.display = 'flex'; msgProx.style.display = 'none';
+                    document.getElementById('val-sb-prox').innerText = formatarNumero(proxConfig.sb);
+                    document.getElementById('val-bb-prox').innerText = formatarNumero(proxConfig.bb);
+                    document.getElementById('val-ante-prox').innerText = formatarNumero(proxConfig.ante);
+                } else if (proxConfig && proxConfig.isBreak) {
+                    gridProx.style.display = 'none'; msgProx.style.display = 'block'; msgProx.innerText = "INTERVALO A SEGUIR";
+                } else {
+                    gridProx.style.display = 'none'; msgProx.style.display = 'block'; msgProx.innerText = "FIM DO TORNEIO";
+                }
+            }
+        }
+
+        function tick() { 
+            tempoJogoSegundos++; 
+            atualizarDisplayTempoJogo();
+
+            if (tempoRestante > 0) { 
+                tempoRestante--; 
+                atualizarTela(); 
+            } else { 
+                tocarAlarme(); 
+                avancarNivel(false); 
+            } 
+        }
+
+        function playTimer() { 
+            if (!rodando) { 
+                rodando = true; 
+                if(!inicioRegistrado) { 
+                    const agora = new Date(); 
+                    horarioInicioStr = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(agora); 
+                    document.getElementById('txt-hora-inicio').innerText = horarioInicioStr;
+                    inicioRegistrado = true; 
+                }
+                
+                intervaloRelogio = setInterval(tick, 1000); 
+                document.getElementById('btn-play').innerText = "▶ RODANDO..."; document.getElementById('btn-play').style.background = "#2ecc71"; document.getElementById('btn-play').style.color = "#000"; 
+            } 
+        }
+
+        function pauseTimer() { rodando = false; clearInterval(intervaloRelogio); document.getElementById('btn-play').innerText = "▶ PLAY"; document.getElementById('btn-play').style.background = "#555"; document.getElementById('btn-play').style.color = "#fff"; }
+        
+        function avancarNivel(tocarSom = true) { if (indiceNivelAtual < estruturaBlinds.length - 1) { indiceNivelAtual++; tempoRestante = estruturaBlinds[indiceNivelAtual].duracao * 60; atualizarTela(); if (tocarSom) tocarAlarme(); } }
+        function voltarNivel() { if (indiceNivelAtual > 0) { indiceNivelAtual--; tempoRestante = estruturaBlinds[indiceNivelAtual].duracao * 60; atualizarTela(); tocarAlarme(); } }
+        function avancarNivelComAlarme() { avancarNivel(true); } function voltarNivelComAlarme() { voltarNivel(); }
+        function alterarTempo(segundos) { tempoRestante += segundos; if (tempoRestante < 0) tempoRestante = 0; atualizarTela(); }
+        
+        function ativarModoTelao() { document.getElementById('painel-admin').classList.add('oculto'); document.getElementById('aviso-esc').style.display = 'block'; setTimeout(() => { document.getElementById('aviso-esc').style.display = 'none'; }, 5000); }
+        window.addEventListener('keydown', function(event) { if (event.key === "Escape") document.getElementById('painel-admin').classList.remove('oculto'); });
+
+        function abrirConfigBlinds() { renderizarListaBlindsModal(); document.getElementById('modal-blinds').classList.remove('oculto'); }
+        function fecharConfigBlinds() { document.getElementById('modal-blinds').classList.add('oculto'); }
+        function renderizarListaBlindsModal() { const container = document.getElementById('lista-blinds-config'); container.innerHTML = ''; estruturaBlinds.forEach(b => { container.appendChild(criarLinhaBlind(b)); }); renumerarBlindsUI(); }
+
+        function criarLinhaBlind(b) {
+            const div = document.createElement('div'); div.className = 'blind-row'; div.draggable = true;
+            let html = `<div class="drag-handle" title="Segure e arraste para reordenar">☰</div>`;
+            if (b.isBreak) {
+                html += `<input type="hidden" class="is-break" value="true"><div class="nivel-label" style="color:#f1c40f;">⏸️</div><div style="flex-grow:1; text-align:left; font-weight:bold; color:#f1c40f;">INTERVALO</div><div>Tempo: <input type="number" class="in-duracao" value="${b.duracao}"> min</div>`;
+            } else {
+                html += `<input type="hidden" class="is-break" value="false"><div class="nivel-label" style="color:#fff;"></div><div style="display:flex; gap:5px; flex-grow:1; justify-content:center;"><input type="number" class="in-sb" value="${b.sb}" placeholder="SB"><input type="number" class="in-bb" value="${b.bb}" placeholder="BB"><input type="number" class="in-ante" value="${b.ante}" placeholder="Ante"></div><div>Tempo: <input type="number" class="in-duracao" value="${b.duracao}" style="color:#fff;"> min</div>`;
+            }
+            html += `<button onclick="this.parentElement.remove(); renumerarBlindsUI();" style="background:#e74c3c; margin-left:10px; color:#fff; font-size:16px; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;" title="Remover Blind">🗑️</button>`;
+            div.innerHTML = html;
+            div.addEventListener('dragstart', () => { div.classList.add('dragging'); }); div.addEventListener('dragend', () => { div.classList.remove('dragging'); renumerarBlindsUI(); });
+            return div;
+        }
+
+        const containerBlinds = document.getElementById('lista-blinds-config');
+        containerBlinds.addEventListener('dragover', e => {
+            e.preventDefault(); const draggingEl = document.querySelector('.dragging'); const afterElement = getDragAfterElement(containerBlinds, e.clientY);
+            if (afterElement == null) containerBlinds.appendChild(draggingEl); else containerBlinds.insertBefore(draggingEl, afterElement);
+        });
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.blind-row:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => { const box = child.getBoundingClientRect(); const offset = y - box.top - box.height / 2; if (offset < 0 && offset > closest.offset) { return { offset: offset, element: child }; } else { return closest; } }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function renumerarBlindsUI() { let contador = 1; document.querySelectorAll('.blind-row').forEach(row => { let isBreak = row.querySelector('.is-break').value === 'true'; if (!isBreak) { let label = row.querySelector('.nivel-label'); if(label) label.innerText = 'Nível ' + contador; contador++; } }); }
+        function addBlindRow(isBreak) { let defaultObj = isBreak ? { isBreak: true, duracao: 15 } : { sb: 0, bb: 0, ante: 0, duracao: 15, isBreak: false }; document.getElementById('lista-blinds-config').appendChild(criarLinhaBlind(defaultObj)); renumerarBlindsUI(); let container = document.getElementById('lista-blinds-config'); container.scrollTop = container.scrollHeight; }
+
+        function salvarBlindsConfig() {
+            let novaEstrutura = []; let contador = 1;
+            document.querySelectorAll('.blind-row').forEach(row => {
+                let isBreak = row.querySelector('.is-break').value === 'true'; let duracao = parseInt(row.querySelector('.in-duracao').value) || 0;
+                if(isBreak) { novaEstrutura.push({ nivel: "INTERVALO", title: "INTERVALO", duracao: duracao, isBreak: true }); } 
+                else { let sb = parseInt(row.querySelector('.in-sb').value) || 0; let bb = parseInt(row.querySelector('.in-bb').value) || 0; let ante = parseInt(row.querySelector('.in-ante').value) || 0; novaEstrutura.push({ nivel: contador, sb: sb, bb: bb, ante: ante, duracao: duracao, isBreak: false }); contador++; }
+            });
+            if (novaEstrutura.length === 0) { alert("Você precisa ter pelo menos 1 Blind na estrutura!"); return; }
+            estruturaBlinds = novaEstrutura; localStorage.setItem('itPokerBlindsV23', JSON.stringify(estruturaBlinds));
+            if (indiceNivelAtual >= estruturaBlinds.length) { indiceNivelAtual = 0; tempoRestante = estruturaBlinds[0].duracao * 60; } else { let tempoTotalCerto = estruturaBlinds[indiceNivelAtual].duracao * 60; if(tempoRestante > tempoTotalCerto) tempoRestante = tempoTotalCerto; }
+            atualizarTela(); fecharConfigBlinds();
+        }
+
+        function abrirConfig() { document.getElementById('modal-personalizacao').classList.remove('oculto'); }
+        function fecharConfig() { document.getElementById('modal-personalizacao').classList.add('oculto'); }
+
+        function getBgBorderVal(idBase) {
+            return document.getElementById(idBase + '-transp').checked ? 'transparent' : document.getElementById(idBase + '-color').value;
+        }
+
+        function salvarConfig() {
+            let savedAtual = JSON.parse(localStorage.getItem('itPokerV23')) || {};
+            let config = {
+                bg: document.getElementById('bg-color').value,
+                ativarAlarme: document.getElementById('ativar-alarme').checked,
+                
+                infoBg: getBgBorderVal('info-bg'), infoBorder: getBgBorderVal('info-border'),
+                etapaBg: getBgBorderVal('etapa-bg'), etapaBorder: getBgBorderVal('etapa-border'),
+                premioBg: getBgBorderVal('premio-bg'), premioBorder: getBgBorderVal('premio-border'),
+                blindsBg: getBgBorderVal('blinds-bg'), blindsBorder: getBgBorderVal('blinds-border'),
+                nivelBg: getBgBorderVal('nivel-bg'), nivelBorder: getBgBorderVal('nivel-border'),
+                timerBg: getBgBorderVal('timer-bg'), timerBorder: getBgBorderVal('timer-border'),
+                footerBg: getBgBorderVal('footer-bg'), footerBorder: getBgBorderVal('footer-border'),
+                
+                sLogo: (document.getElementById('s-logo').value || '500') + 'px',
+                cHeader: document.getElementById('c-header').value, cNivel: document.getElementById('c-nivel').value, cTimer: document.getElementById('c-timer').value,
+                
+                cBlindTitle: document.getElementById('c-blind-title').value, cBlindLabel: document.getElementById('c-blind-label').value, cBlindVal: document.getElementById('c-blind-val').value,
+                cEtapaLabel: document.getElementById('c-etapa-label').value, cEtapaVal: document.getElementById('c-etapa-val').value,
+                cPremioTitle: document.getElementById('c-premio-title').value, cPremioTotal: document.getElementById('c-premio-total').value, cPremioItem: document.getElementById('c-premio-item').value,
+                cFooterLabel: document.getElementById('c-footer-label').value, cFooterVal: document.getElementById('c-footer-val').value,
+                
+                cInfoLabel: document.getElementById('c-info-label').value, cInfoVal: document.getElementById('c-info-val').value,
+                sInfoLabel: (document.getElementById('s-info-label').value || '70') + 'px', sInfoVal: (document.getElementById('s-info-val').value || '70') + 'px',
+
+                sHeader: (document.getElementById('s-header').value || '0') + 'px', sNivel: (document.getElementById('s-nivel').value || '90') + 'px', sTimer: (document.getElementById('s-timer').value || '550') + 'px',
+                sBlindTitle: (document.getElementById('s-blind-title').value || '40') + 'px', sBlindLabel: (document.getElementById('s-blind-label').value || '40') + 'px', sBlindVal: (document.getElementById('s-blind-val').value || '100') + 'px',
+                sEtapaLabel: (document.getElementById('s-etapa-label').value || '0') + 'px', sEtapaVal: (document.getElementById('s-etapa-val').value || '0') + 'px',
+                sPremioTitle: (document.getElementById('s-premio-title').value || '50') + 'px', sPremioTotal: (document.getElementById('s-premio-total').value || '40') + 'px', sPremioItem: (document.getElementById('s-premio-item').value || '40') + 'px',
+                sFooterLabel: (document.getElementById('s-footer-label').value || '16') + 'px', sFooterVal: (document.getElementById('s-footer-val').value || '70') + 'px',
+                
+                pTimerX: (document.getElementById('pos-timer-x').value || '0') + 'px', pTimerY: (document.getElementById('pos-timer-y').value || '-120') + 'px',
+                pBlindsX: (document.getElementById('pos-blinds-x').value || '0') + 'px', pBlindsY: (document.getElementById('pos-blinds-y').value || '-100') + 'px',
+                pNivelX: (document.getElementById('pos-nivel-x').value || '0') + 'px', pNivelY: (document.getElementById('pos-nivel-y').value || '-80') + 'px',
+                pHeaderX: (document.getElementById('pos-header-x').value || '0') + 'px', pHeaderY: (document.getElementById('pos-header-y').value || '0') + 'px',
+                pEtapaX: (document.getElementById('pos-etapa-x').value || '-9') + 'px', pEtapaY: (document.getElementById('pos-etapa-y').value || '0') + 'px',
+                pPremioX: (document.getElementById('pos-premiacao-x').value || '0') + 'px', pPremioY: (document.getElementById('pos-premiacao-y').value || '0') + 'px',
+                pFooterX: (document.getElementById('pos-footer-x').value || '0') + 'px', pFooterY: (document.getElementById('pos-footer-y').value || '1150') + 'px',
+                
+                pInfoX: (document.getElementById('pos-info-x').value || '40') + 'px', pInfoY: (document.getElementById('pos-info-y').value || '20') + 'px',
+                
+                logo: savedAtual.logo || "" 
+            };
+
+            aplicarEstilos(config); 
+            let inputLogo = document.getElementById('input-logo');
+            if (inputLogo && inputLogo.files && inputLogo.files[0]) {
+                let reader = new FileReader();
+                reader.onload = function(e) { 
+                    try { config.logo = e.target.result; aplicarLogo(config.logo); localStorage.setItem('itPokerV23', JSON.stringify(config)); } catch(err) { }
+                };
+                reader.readAsDataURL(inputLogo.files[0]);
+            } else {
+                localStorage.setItem('itPokerV23', JSON.stringify(config));
+            }
+            fecharConfig();
+        }
+
+        function aplicarEstilos(c) {
+            let root = document.documentElement;
+            root.style.setProperty('--bg-color', c.bg || '#000000'); 
+            root.style.setProperty('--info-bg', c.infoBg || 'transparent'); root.style.setProperty('--info-border', c.infoBorder || 'transparent');
+            root.style.setProperty('--etapa-bg', c.etapaBg || 'transparent'); root.style.setProperty('--etapa-border', c.etapaBorder || 'transparent');
+            root.style.setProperty('--premio-bg', c.premioBg || 'transparent'); root.style.setProperty('--premio-border', c.premioBorder || 'transparent');
+            root.style.setProperty('--blinds-bg', c.blindsBg || 'transparent'); root.style.setProperty('--blinds-border', c.blindsBorder || 'transparent');
+            root.style.setProperty('--nivel-bg', c.nivelBg || 'transparent'); root.style.setProperty('--nivel-border', c.nivelBorder || 'transparent');
+            root.style.setProperty('--timer-bg', c.timerBg || 'transparent'); root.style.setProperty('--timer-border', c.timerBorder || 'transparent');
+            root.style.setProperty('--footer-bg', c.footerBg || 'transparent'); root.style.setProperty('--footer-border', c.footerBorder || 'transparent');
+            root.style.setProperty('--size-logo', c.sLogo || '500px');
+            
+            root.style.setProperty('--c-header', c.cHeader || '#00ff00'); root.style.setProperty('--s-header', c.sHeader || '0px');
+            root.style.setProperty('--c-nivel', c.cNivel || '#ff0000'); root.style.setProperty('--s-nivel', c.sNivel || '90px');
+            root.style.setProperty('--c-timer', c.cTimer || '#ffffff'); root.style.setProperty('--s-timer', c.sTimer || '550px');
+            root.style.setProperty('--c-blind-title', c.cBlindTitle || '#ffff00'); root.style.setProperty('--s-blind-title', c.sBlindTitle || '40px');
+            root.style.setProperty('--c-blind-label', c.cBlindLabel || '#00ff00'); root.style.setProperty('--s-blind-label', c.sBlindLabel || '40px');
+            root.style.setProperty('--c-blind-val', c.cBlindVal || '#ffffff'); root.style.setProperty('--s-blind-val', c.sBlindVal || '100px');
+            root.style.setProperty('--c-etapa-label', c.cEtapaLabel || '#ffffff'); root.style.setProperty('--s-etapa-label', c.sEtapaLabel || '0px');
+            root.style.setProperty('--c-etapa-val', c.cEtapaVal || '#00ff00'); root.style.setProperty('--s-etapa-val', c.sEtapaVal || '0px');
+            root.style.setProperty('--c-premio-title', c.cPremioTitle || '#00ff00'); root.style.setProperty('--s-premio-title', c.sPremioTitle || '50px');
+            root.style.setProperty('--c-premio-total', c.cPremioTotal || '#2ecc71'); root.style.setProperty('--s-premio-total', c.sPremioTotal || '40px');
+            root.style.setProperty('--c-premio-item', c.cPremioItem || '#ffffff'); root.style.setProperty('--s-premio-item', c.sPremioItem || '40px');
+            root.style.setProperty('--c-footer-label', c.cFooterLabel || '#ffffff'); root.style.setProperty('--s-footer-label', c.sFooterLabel || '16px');
+            root.style.setProperty('--c-footer-val', c.cFooterVal || '#00ff00'); root.style.setProperty('--s-footer-val', c.sFooterVal || '70px');
+
+            root.style.setProperty('--c-info-label', c.cInfoLabel || '#ffffff'); root.style.setProperty('--s-info-label', c.sInfoLabel || '70px');
+            root.style.setProperty('--c-info-val', c.cInfoVal || '#ffff00'); root.style.setProperty('--s-info-val', c.sInfoVal || '70px');
+
+            root.style.setProperty('--pos-timer-left', c.pTimerX || '0px'); root.style.setProperty('--pos-timer-top', c.pTimerY || '-120px');
+            root.style.setProperty('--pos-blinds-left', c.pBlindsX || '0px'); root.style.setProperty('--pos-blinds-top', c.pBlindsY || '-100px');
+            root.style.setProperty('--pos-nivel-left', c.pNivelX || '0px'); root.style.setProperty('--pos-nivel-top', c.pNivelY || '-80px');
+            root.style.setProperty('--pos-header-left', c.pHeaderX || '0px'); root.style.setProperty('--pos-header-top', c.pHeaderY || '0px');
+            root.style.setProperty('--pos-etapa-left', c.pEtapaX || '-9px'); root.style.setProperty('--pos-etapa-top', c.pEtapaY || '0px');
+            root.style.setProperty('--pos-premiacao-left', c.pPremioX || '0px'); root.style.setProperty('--pos-premiacao-top', c.pPremioY || '0px');
+            root.style.setProperty('--pos-footer-left', c.pFooterX || '0px'); root.style.setProperty('--pos-footer-top', c.pFooterY || '1150px');
+            
+            root.style.setProperty('--pos-info-right', c.pInfoX || '40px'); root.style.setProperty('--pos-info-top', c.pInfoY || '20px');
+        }
+
+        function aplicarLogo(logoData) { 
+            let imgEl = document.getElementById('logo-display'); 
+            if (logoData && logoData.trim() !== "") { 
+                imgEl.src = logoData; 
+                imgEl.style.display = 'block'; 
+            } else { 
+                imgEl.src = "sas.png"; 
+                imgEl.style.display = 'block'; 
+            } 
+        }
+
+        function setBgControlLoad(idBase, savedValue) {
+            let col = document.getElementById(idBase + '-color');
+            let chk = document.getElementById(idBase + '-transp');
+            if (!savedValue || savedValue === 'transparent' || savedValue.includes('rgba(0, 0, 0, 0)')) {
+                chk.checked = true; col.value = '#000000';
+            } else {
+                chk.checked = false; col.value = savedValue;
+            }
+        }
+
+        function carregarConfiguracoesSalvas() {
+            let saved = localStorage.getItem('itPokerV23');
+            if (saved) {
+                try {
+                    let c = JSON.parse(saved); aplicarEstilos(c); aplicarLogo(c.logo);
+                    document.getElementById('bg-color').value = c.bg || '#000000'; document.getElementById('ativar-alarme').checked = c.ativarAlarme !== undefined ? c.ativarAlarme : true;
+                    
+                    setBgControlLoad('info-bg', c.infoBg); setBgControlLoad('info-border', c.infoBorder);
+                    setBgControlLoad('etapa-bg', c.etapaBg); setBgControlLoad('etapa-border', c.etapaBorder);
+                    setBgControlLoad('premio-bg', c.premioBg); setBgControlLoad('premio-border', c.premioBorder);
+                    setBgControlLoad('blinds-bg', c.blindsBg); setBgControlLoad('blinds-border', c.blindsBorder);
+                    setBgControlLoad('nivel-bg', c.nivelBg); setBgControlLoad('nivel-border', c.nivelBorder);
+                    setBgControlLoad('timer-bg', c.timerBg); setBgControlLoad('timer-border', c.timerBorder);
+                    setBgControlLoad('footer-bg', c.footerBg); setBgControlLoad('footer-border', c.footerBorder);
+
+                    document.getElementById('s-logo').value = parseInt(c.sLogo) || 500;
+                    document.getElementById('c-header').value = c.cHeader || '#00ff00'; document.getElementById('s-header').value = parseInt(c.sHeader) || 0;
+                    document.getElementById('c-nivel').value = c.cNivel || '#ff0000'; document.getElementById('s-nivel').value = parseInt(c.sNivel) || 90;
+                    document.getElementById('c-timer').value = c.cTimer || '#ffffff'; document.getElementById('s-timer').value = parseInt(c.sTimer) || 550;
+                    
+                    document.getElementById('c-info-label').value = c.cInfoLabel || '#ffffff'; document.getElementById('s-info-label').value = parseInt(c.sInfoLabel) || 70;
+                    document.getElementById('c-info-val').value = c.cInfoVal || '#ffff00'; document.getElementById('s-info-val').value = parseInt(c.sInfoVal) || 70;
+
+                    document.getElementById('c-blind-title').value = c.cBlindTitle || '#ffff00'; document.getElementById('s-blind-title').value = parseInt(c.sBlindTitle) || 40;
+                    document.getElementById('c-blind-label').value = c.cBlindLabel || '#00ff00'; document.getElementById('s-blind-label').value = parseInt(c.sBlindLabel) || 40;
+                    document.getElementById('c-blind-val').value = c.cBlindVal || '#ffffff'; document.getElementById('s-blind-val').value = parseInt(c.sBlindVal) || 100;
+                    document.getElementById('c-etapa-label').value = c.cEtapaLabel || '#ffffff'; document.getElementById('s-etapa-label').value = parseInt(c.sEtapaLabel) || 0;
+                    document.getElementById('c-etapa-val').value = c.cEtapaVal || '#00ff00'; document.getElementById('s-etapa-val').value = parseInt(c.sEtapaVal) || 0;
+                    document.getElementById('c-premio-title').value = c.cPremioTitle || '#00ff00'; document.getElementById('s-premio-title').value = parseInt(c.sPremioTitle) || 50;
+                    document.getElementById('c-premio-total').value = c.cPremioTotal || '#2ecc71'; document.getElementById('s-premio-total').value = parseInt(c.sPremioTotal) || 40;
+                    document.getElementById('c-premio-item').value = c.cPremioItem || '#ffffff'; document.getElementById('s-premio-item').value = parseInt(c.sPremioItem) || 40;
+                    document.getElementById('c-footer-label').value = c.cFooterLabel || '#ffffff'; document.getElementById('s-footer-label').value = parseInt(c.sFooterLabel) || 16;
+                    document.getElementById('c-footer-val').value = c.cFooterVal || '#00ff00'; document.getElementById('s-footer-val').value = parseInt(c.sFooterVal) || 70;
+                    
+                    document.getElementById('pos-timer-x').value = parseInt(c.pTimerX) || 0; document.getElementById('pos-timer-y').value = parseInt(c.pTimerY) || -120;
+                    document.getElementById('pos-blinds-x').value = parseInt(c.pBlindsX) || 0; document.getElementById('pos-blinds-y').value = parseInt(c.pBlindsY) || -100;
+                    document.getElementById('pos-nivel-x').value = parseInt(c.pNivelX) || 0; document.getElementById('pos-nivel-y').value = parseInt(c.pNivelY) || -80;
+                    document.getElementById('pos-header-x').value = parseInt(c.pHeaderX) || 0; document.getElementById('pos-header-y').value = parseInt(c.pHeaderY) || 0;
+                    document.getElementById('pos-etapa-x').value = parseInt(c.pEtapaX) || -9; document.getElementById('pos-etapa-y').value = parseInt(c.pEtapaY) || 0;
+                    document.getElementById('pos-premiacao-x').value = parseInt(c.pPremioX) || 0; document.getElementById('pos-premiacao-y').value = parseInt(c.pPremioY) || 0;
+                    document.getElementById('pos-footer-x').value = parseInt(c.pFooterX) || 0; document.getElementById('pos-footer-y').value = parseInt(c.pFooterY) || 1150;
+                    
+                    document.getElementById('pos-info-x').value = parseInt(c.pInfoX) || 40; document.getElementById('pos-info-y').value = parseInt(c.pInfoY) || 20;
+
+                } catch(e) {}
+            } else {
+                ['info','etapa','premio','blinds','nivel','timer','footer'].forEach(b => {
+                    document.getElementById(b+'-bg-transp').checked = true; document.getElementById(b+'-border-transp').checked = true;
+                });
+            }
+        }
+
+        const urlPlanilha = "https://script.google.com/macros/s/AKfycbx0eve1bYKtq1xqrQ_fQS6WlYVEnZ7pN7pJfAaezYhLLlVjdmwCMzHASBn0mf8FjxRk/exec";
+        
+        async function atualizarDadosPlanilha() {
+            try {
+                let resposta = await fetch(urlPlanilha); 
+                let dados = await resposta.json();
+                
+                let v = dados.valoresFichas; let q = dados.quantidadesVendidas;
+                let pRegistrados = dados.playersRegistrados || 0; let pEmJogo = dados.playersEmJogo || 0; let pEliminados = dados.playersEliminados || 0;
+                let totalFichas = (v.buyIn * q.buyIn) + (v.rebuySimples * q.rebuySimples) + (v.rebuyDuplo * q.rebuyDuplo) + (v.addonSimples * q.addonSimples) + (v.addonSuper * q.addonSuper);
+                let stackMedio = pEmJogo > 0 ? Math.floor(totalFichas / pEmJogo) : 0;
+                
+                document.getElementById('txt-aba-atual').innerText = dados.abaLida.toUpperCase();
+                document.getElementById('txt-registrados').innerText = pRegistrados;
+                document.getElementById('txt-em-jogo').innerText = pEmJogo;
+                document.getElementById('txt-eliminados').innerText = pEliminados;
+                document.getElementById('txt-fichas').innerText = totalFichas.toLocaleString('pt-BR'); 
+                document.getElementById('txt-stack').innerText = stackMedio.toLocaleString('pt-BR');
+
+                if (dados.premiacao) {
+                    let boxPremio = document.getElementById('box-premiacao'); let listaPremio = document.getElementById('lista-premiacao-exibicao'); let txtTotalPremio = document.getElementById('txt-total-premio');
+                    listaPremio.innerHTML = ""; let exibirBox = false; let p = dados.premiacao; let valorTotal = p.totalGarantido || p.total || p.garantido || "";
+
+                    if (valorTotal !== undefined && valorTotal !== null && valorTotal.toString().trim() !== "") {
+                        txtTotalPremio.innerText = valorTotal; txtTotalPremio.style.display = 'block'; exibirBox = true;
+                    } else { txtTotalPremio.style.display = 'none'; }
+
+                    if (dados.premiacao.itens && dados.premiacao.itens.length > 0) {
+                        dados.premiacao.itens.forEach(item => {
+                            let valStr = item.valor ? item.valor.toString() : ""; let limpo = valStr.replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.');
+                            let num = parseFloat(limpo); let ehZero = isNaN(num) || num === 0;
+
+                            if (!ehZero && valStr.trim() !== "") {
+                                let div = document.createElement('div'); div.className = 'premiacao-item';
+                                div.innerHTML = `<span>${item.posicao}</span> <span>${item.valor}</span>`;
+                                listaPremio.appendChild(div); exibirBox = true;
+                            }
+                        });
+                    }
+                    if (!premiacaoVisivel) { boxPremio.style.display = 'none'; } else { boxPremio.style.display = exibirBox ? 'block' : 'none'; }
+                }
+            } catch (erro) { console.log("Aguardando Sheets...", erro); }
+        }
+
+        carregarConfiguracoesSalvas(); 
+        aplicarEstadoFooterInicial();
+        setInterval(atualizarDadosPlanilha, 10000); 
+        setInterval(atualizarRelogioEstatico, 1000); 
+        
+        atualizarDadosPlanilha(); atualizarTela(); 
+        atualizarRelogioEstatico(); 
+    </script>
+</body>
+</html>
